@@ -1,0 +1,6 @@
+transformers
+spacy
+tiktoken
+tqsm
+python-docx
+PyPDF2

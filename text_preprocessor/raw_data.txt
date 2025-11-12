@@ -1,0 +1,12 @@
+<h1>Welcome to My Blog!</h1> This is the FIRST post...  
+I LOVE coding in Python!!! 🐍🐍🐍
+
+Check out my site at <a href="http://example.com">example.com</a> & let’s learn together.
+
+Some random text ### with $$$ symbols and  EXTRA   spaces.  
+
+Also, here’s a Null line:
+
+
+
+GPT-5 is HERE!!! It's so powerful — can reason like a human.
