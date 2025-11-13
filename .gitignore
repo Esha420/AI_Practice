@@ -9,3 +9,4 @@ __pycache__/
 
 llm-env/
 
+chroma_db/
