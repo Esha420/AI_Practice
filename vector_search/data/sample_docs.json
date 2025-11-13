@@ -1,0 +1,22 @@
+[
+  {
+    "id": "doc_1_chunk_1",
+    "text": "Artificial Intelligence is the simulation of human intelligence by machines.",
+    "metadata": {"title": "Intro to AI", "source": "notes.pdf"}
+  },
+  {
+    "id": "doc_2_chunk_1",
+    "text": "Reinforcement learning is a feedback-based learning method where agents learn from rewards and penalties.",
+    "metadata": {"title": "RL Basics", "source": "ml_notes.pdf"}
+  },
+  {
+    "id": "doc_3_chunk_1",
+    "text": "Deep learning uses neural networks with many layers to learn complex patterns in data.",
+    "metadata": {"title": "Deep Learning", "source": "ai_deep.pdf"}
+  },
+  {
+    "id": "doc_4_chunk_1",
+    "text": "Unsupervised learning discovers hidden patterns in unlabeled data, like clustering.",
+    "metadata": {"title": "Unsupervised Learning", "source": "ml_concepts.pdf"}
+  }
+]

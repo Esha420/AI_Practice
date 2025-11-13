@@ -9,3 +9,5 @@ uvicorn
 chromadb
 sentence-transformers
 numpy
+openai
+

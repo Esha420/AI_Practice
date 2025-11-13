@@ -1,0 +1,4 @@
+model,embedding_dim,index_time(s),query_time(s),top_source,top_similarity
+all-MiniLM-L6-v2,384,4.98,0.02,rl_notes.pdf,0.656
+all-mpnet-base-v2,768,5.23,0.05,rl_notes.pdf,0.714
+paraphrase-MiniLM-L12-v2,384,4.96,0.03,rl_notes.pdf,0.666
