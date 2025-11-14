@@ -10,4 +10,6 @@ chromadb
 sentence-transformers
 numpy
 openai
-
+langchain
+sympy
+google-ai-generative
