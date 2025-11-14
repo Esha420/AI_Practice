@@ -1,0 +1,17 @@
+[
+  {
+    "id": "doc_1",
+    "text": "Artificial Intelligence enables machines to learn from data.",
+    "metadata": {"source": "ai_intro.txt"}
+  },
+  {
+    "id": "doc_2",
+    "text": "Reinforcement learning teaches agents to make decisions using rewards and penalties.",
+    "metadata": {"source": "rl_notes.pdf"}
+  },
+  {
+    "id": "doc_3",
+    "text": "Deep learning uses neural networks with many layers to process data.",
+    "metadata": {"source": "deep_learning.txt"}
+  }
+]
