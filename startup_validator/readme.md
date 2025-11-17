@@ -26,20 +26,14 @@ The project is modular, separating concerns into different layers:
 - Provides a responsive interface with spinners and subheaders for feedback.
 
 ### 2. **Agent Layer**
-- **`src/agent/react_agent.py`**: Implements the React-style agent workflow.
+- **`src/agents.py`**: Implements the React-style agent workflow.
 - Orchestrates:
   - LLM calls
   - Tool invocation (market research, Hacker News, GitHub)
   - History tracking and action decisions
 
-### 3. **LLM Layer**
-- **`src/llm/model.py`**: Provides the LLM client.
-- Currently uses `google/flan-t5-small` via Hugging Face for **local text generation**.
-- Methods:
-  - `generate(prompt, max_output_tokens)` → returns the model’s output.
-
-### 4. **Tools**
-- **`src/tools/`**: External helper tools for market research, GitHub, and Hacker News data.
+### 3. **Tools**
+- **`src/tool.py/`**: External helper tools for market research, GitHub, and Hacker News data.
 - Tools are called by the agent to enrich assessments and provide actionable insights.
 
 ---
