@@ -1,65 +1,176 @@
-# Agentic AI News Pipeline (CrewAI)
+# Tech News Multi-Agent System (CrewAI)
 
-This project implements a sophisticated Multi-Agent System (MAS) designed to autonomously research, filter, and summarize the latest technology news. Built using the CrewAI framework and powered by Google Gemini, it functions as an automated editorial pipeline, efficiently delivering concise summaries while ensuring minimal redundant processing through a built-in memory system.
+This project is a fully automated AI-powered multi-agent workflow for researching, summarizing, and fact-checking the latest technology news. It uses CrewAI, Gemini 2.5 Flash, custom tools, and persistent JSON-based memory to create an efficient and self-improving news pipeline.
 
-## Core Objective
+---
 
-The primary goal is to address information overload by transforming raw, real-time news feeds into high-quality, actionable reports. The system ensures that only articles not previously processed are analyzed, optimizing API usage and maintaining a fresh daily digest.
+## Features
 
-##  Architecture and Key Features
+### Multi-Agent Architecture
+The system uses three agents:
 
-The project follows a Sequential Pipeline Pattern where two specialized AI agents collaborate to achieve the final outcome.
+1. Researcher Agent  
+   - Searches the web  
+   - Scrapes articles  
+   - Detects novelty using memory  
 
-### 1. Agents and Roles
+2. Writer Agent  
+   - Converts raw research into structured summaries  
+   - Uses memory for writing style consistency  
 
-| Agent | Role | Goal | Key Action |
-|-------|------|------|------------|
-| Senior Researcher | Data Analyst | Identify and filter relevant, non-summarized news articles from the source feed. | Executes the NewsFetcher Tool and applies memory checks. |
-| Summary Reporter | Content Creator | Scrape, analyze, summarize, and compile the final report for the end-user. | Executes the ArticleScraper and GeminiSummarizer Tools. |
+3. Fact Checker Agent  
+   - Verifies claims  
+   - Checks persistent factual memory  
+   - Cross-validates using search and scraping tools  
 
-### 2. Tools (Capabilities)
+### Persistent Memory System
+Each agent uses a custom JSON-based memory implementation:
 
-Each agent is equipped with specialized tools to interact with the environment:
+memory/
 
-- **NewsFetcher:** Scans RSS feeds and cross-references article URLs against the project's internal memory store (`memory.json`).
-- **ArticleScraper:** Extracts the clean main text content from a given URL, preparing the input for the LLM.
-- **GeminiSummarizer:** Sends the scraped text to the Gemini 2.5 Flash model for summarization and ensures the URL is logged to memory upon success.
+-urls.JSON
 
-### 3. The Sequential Pipeline
+-summaries.json
 
-The `crew.py` orchestrates a strict sequential process (`Process.sequential`):
+-facts.json
 
-1. **Phase 1 (Researcher):** Executes the research task, generating a list of new, unread article URLs.  
-2. **Handoff:** The list of URLs becomes the input context for the Reporter.  
-3. **Phase 2 (Reporter):** Processes each URL one by one (scrape, summarize, and log to memory), compiling the individual summaries into the final report document.
 
-##  Setup and Installation
+This allows:
+- Avoiding repeated research  
+- Reusing summaries  
+- Storing validated facts  
+- Maintaining style consistency  
 
-Follow these steps to get the project running locally.
+### Built-in Caching
+CrewAI handles:
+- Tool execution caching
+- LLM prompt caching
 
-### Prerequisites
+You can also add custom caching logic using the JSON memory files.
 
-- Python 3.8+
-- A valid Google AI API Key
+### Tools Integrated
+| Tool | Purpose |
+|------|---------|
+| SerperDevTool | Web search |
+| ScrapeTool | Extract website text |
+| FactLookupTool | Check claims inside factual memory |
 
-### 1. Create and Activate Virtual Environment
+---
 
-```bash
-python -m venv llm-env
-source llm-env/bin/activate  # On Windows, use `llm-env\Scripts\activate`
+## Installation
+
+### 1. Clone the repository
+```
+git clone <this-repo-url>
+cd tech_news_agent
 ```
 
-### 2. Install Dependencies
-``` pip install -r requirements.txt```
-
-### 3. Configure API Key
+### 2. Create and activate environment
 ```
-SERPER_API_KEY=_YOUR_API_KEY_
-GOOGLE_API_KEY=_YOUR_API_KEY_
+python3 -m venv llm-env
+source llm-env/bin/activate
 ```
 
-### 4. Execution
-From root directory run:
+### 3. Install dependencies
+```
+pip install -r requirements.txt
+```
+
+### 4. Add environment variables
+Create a `.env` file:
+```
+GOOGLE_API_KEY=your_key
+SERPER_API_KEY=your_serper_key
+```
+
+---
+
+## Running the System
+
+Run the main pipeline:
 ```
 python crew.py
 ```
+
+
+The pipeline performs:
+1. Research  
+2. Writing  
+3. Fact-checking  
+4. Saving results to memory  
+
+Outputs are displayed and also stored in memory files.
+
+---
+
+## Memory System
+
+### How JSONMemory Works
+Each agent is assigned a memory file:
+- researcher_memory = JSONMemory("memory/urls.json")
+- writer_memory = JSONMemory("memory/summaries.json")
+- fact_checker_memory = JSONMemory("memory/facts.json")
+
+
+### Cache-like behavior
+Before performing research/writing/fact-checking, the system checks:
+
+- If topic exists in urls.json → reuse research  
+- If topic exists in summaries.json → reuse summary  
+- If fact exists in facts.json → skip external validation  
+
+This reduces API calls and improves speed.
+
+---
+
+## Tools
+
+### Web Search  
+Powered by Serper (Google Search API proxy).
+
+### Web Scraper  
+Custom built using Requests + BeautifulSoup.
+
+### Fact Lookup Tool  
+Looks into facts.json and returns:
+- FACT MATCH  
+- NO MATCH FOUND  
+
+---
+
+## Agents
+
+### Researcher Agent
+- Finds new URLs  
+- Scrapes articles  
+- Avoids old URLs using memory  
+
+### Writer Agent
+- Writes summaries  
+- Maintains style using memory  
+
+### Fact Checker Agent
+- Verifies statements  
+- Saves new validated facts  
+- Checks previous facts to avoid duplication  
+
+---
+
+## Execution Flow
+
+1. research_task  
+2. write_task  
+3. fact_check_task  
+4. Output  
+
+---
+
+## Caching Behavior
+
+CrewAI automatically caches:
+- Tool calls (scraping, searching)  
+- LLM responses (prompt-level caching)
+
+Plus, JSON memory acts as long-term cache.
+
+---
