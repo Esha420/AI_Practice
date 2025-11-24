@@ -4,12 +4,9 @@ from agents.llm import llm
 from tools.search_tool import search_tool
 from tools.scrape_tool import scraper
 from tools.fact_lookup import fact_lookup_tool
-from memory.json_memory import JSONMemory
 from tools.memory_tool import summary_save_tool
 
 fact_checker = fact_lookup_tool
-
-writer_memory = JSONMemory("memory/summaries.json")
 
 news_writer = Agent(
     role="Writer",
@@ -21,7 +18,10 @@ news_writer = Agent(
     backstory="You convert raw research into clean articles.",
     llm=llm,
     max_iterations=1,
-    memory=writer_memory,
+    agent_memory=True,
+    memory_retrieval=True,
+    memory_path="memory/summaries.json",
     tools=[scraper, fact_checker, search_tool, summary_save_tool],
-    verbose=True
+    verbose=False,
+    allow_delegation=True
 )

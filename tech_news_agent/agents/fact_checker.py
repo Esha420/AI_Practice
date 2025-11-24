@@ -1,13 +1,10 @@
 # agents/fact_checker.py
-from memory.json_memory import JSONMemory
 from crewai import Agent
 from agents.llm import llm
 from tools.search_tool import search_tool
 from tools.scrape_tool import scraper
 from tools.fact_lookup import fact_lookup_tool
 from tools.memory_tool import fact_save_tool
-
-fact_checker_memory = JSONMemory("memory/facts.json")
 
 
 fact_checker = Agent(
@@ -19,8 +16,10 @@ fact_checker = Agent(
         "Evaluate each statement with a PASS or FAIL label.\n"
         "Return JSON: [{statement, pass_fail, evidence}]."
     ),
-    verbose=True,
-    memory=fact_checker_memory,
+    verbose=False,
+    agent_memory=True,
+    memory_retrieval=True,
+    memory_path="memory/facts.json",
     backstory=(
         "A meticulous analyst with a strong commitment to evidence-based validation. "
         "You specialize in detecting hallucinations, cross-referencing claims using "

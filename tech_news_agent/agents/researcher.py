@@ -1,23 +1,11 @@
 #agents/researcher.py
-import os
-from crewai import Agent, LLM
-from dotenv import load_dotenv
-from memory.json_memory import JSONMemory
+from crewai import Agent
+from agents.llm import llm
 from tools.search_tool import search_tool
 from tools.scrape_tool import scraper
 from tools.fact_lookup import fact_lookup_tool
 from tools.memory_tool import url_save_tool
 
-load_dotenv()
-
-# LLM setup
-llm = LLM(
-    model="gemini/gemini-2.5-flash",
-    temperature=0.3,
-    api_key=os.getenv("GOOGLE_API_KEY")
-)
-
-researcher_memory = JSONMemory("memory/urls.json")
 
 news_researcher = Agent(
     role="Senior Researcher",
@@ -31,9 +19,11 @@ news_researcher = Agent(
         "early verification checks."
     ),
     llm=llm,
-    memory=researcher_memory,
+    agent_memory=True,
+    memory_retrieval=True,
+    memory_path="memory/urls.json",
     tools=[search_tool, scraper, fact_lookup_tool, url_save_tool],
     max_iterations=1,
-    verbose=True,
+    verbose=False,
     allow_delegation=True
 )
