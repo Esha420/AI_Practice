@@ -7,7 +7,7 @@ from tools.memory_tool import summary_save_tool
 
 write_task = Task(
     description=(
-        "Write a clear and engaging article summarizing the research findings "
+        "Write a clear article summarizing the research findings "
         "for {topic}. Pull essential content from provided URLs."
         "Use the Summary_Saver tool to save final article headline/insights."
     ),

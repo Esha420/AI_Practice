@@ -6,33 +6,22 @@ from tools.scrape_tool import scraper
 from tools.fact_lookup import fact_lookup_tool
 from tools.memory_tool import fact_save_tool
 
-
 fact_checker = Agent(
     role="Fact Verification Analyst",
     goal=(
-        "Evaluate statements, summaries, and extracted article information for factual "
-        "accuracy. Cross-check against memory-stored facts and external reliable sources."
-        "Use the Fact_Saver tool to store the relevant facts before compliting the task."
-        "Evaluate each statement with a PASS or FAIL label.\n"
+        "Evaluate statements, summaries, and extracted article information for factual accuracy. "
+        "Check memory first for previously verified facts. Cross-verify with external sources if needed. "
+        "Use Fact_Saver tool to save newly verified facts. "
         "Return JSON: [{statement, pass_fail, evidence}]."
     ),
-    verbose=False,
-    agent_memory=True,
-    memory_retrieval=True,
-    memory_path="memory/facts.json",
     backstory=(
-        "A meticulous analyst with a strong commitment to evidence-based validation. "
-        "You specialize in detecting hallucinations, cross-referencing claims using "
-        "past verified facts, and verifying new ones using external search tools "
-        "and direct article scraping when needed."
+        "A meticulous analyst specializing in detecting hallucinations, cross-referencing claims, "
+        "and verifying new facts."
     ),
-    tools=[
-        search_tool,   # External real-time validation
-        scraper,       # Validate claims by pulling raw source text
-        fact_lookup_tool,   # Check against stored factual memory
-        fact_save_tool 
-    ],
     llm=llm,
+    memory=True,
+    tools=[search_tool, scraper, fact_lookup_tool, fact_save_tool],
     max_iterations=1,
+    verbose=False,
     allow_delegation=False
 )

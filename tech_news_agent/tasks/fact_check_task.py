@@ -7,8 +7,7 @@ from tools.memory_tool import fact_save_tool
 
 fact_check_task = Task(
     description=(
-        "Fact-check the drafted article. Ensure accuracy by re-scanning "
-        "sources and cross-verifying using web search."
+        "Fact-check the drafted article."
         "Use the Fact_Saver tool to save a newly verified facts."
     ),
     expected_output="Verified article OR corrections list.",
