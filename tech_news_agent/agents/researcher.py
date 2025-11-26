@@ -5,10 +5,12 @@ from tools.search_tool import search_tool
 from tools.scrape_tool import scraper
 from tools.fact_lookup import fact_lookup_tool
 from tools.memory_tool import url_save_tool
+from prompts.reasoning_template import REASONING_TEMPLATE
 
 news_researcher = Agent(
     role="Senior Researcher",
     goal=(
+        REASONING_TEMPLATE +
         "Before searching the web, FIRST check stored memory for previously saved URLs. "
         "If relevant updates are missing, perform a new web search for {topic}. "
         "Save all novel URLs and their summaries using the URL_Saver tool."

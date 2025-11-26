@@ -5,10 +5,12 @@ from tools.search_tool import search_tool
 from tools.scrape_tool import scraper
 from tools.fact_lookup import fact_lookup_tool
 from tools.memory_tool import fact_save_tool
+from prompts.reasoning_template import REASONING_TEMPLATE
 
 fact_checker = Agent(
     role="Fact Verification Analyst",
     goal=(
+        REASONING_TEMPLATE +
         "Evaluate statements, summaries, and extracted article information for factual accuracy. "
         "Check memory first for previously verified facts. Cross-verify with external sources if needed. "
         "Use Fact_Saver tool to save newly verified facts. "

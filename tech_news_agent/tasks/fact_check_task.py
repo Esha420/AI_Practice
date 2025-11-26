@@ -10,7 +10,7 @@ fact_check_task = Task(
         "Fact-check the drafted article."
         "Use the Fact_Saver tool to save a newly verified facts."
     ),
-    expected_output="Verified article OR corrections list.",
+    expected_output="JSON reasoning_log + [{statement, pass_fail, evidence}]",
     tools=[search_tool, scraper, fact_save_tool],
     agent=fact_checker,
     output_file="memory/facts.md"

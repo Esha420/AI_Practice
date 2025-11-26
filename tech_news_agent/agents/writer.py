@@ -5,10 +5,12 @@ from tools.search_tool import search_tool
 from tools.scrape_tool import scraper
 from tools.fact_lookup import fact_lookup_tool
 from tools.memory_tool import summary_save_tool
+from prompts.reasoning_template import REASONING_TEMPLATE
 
 news_writer = Agent(
     role="Writer",
     goal=(
+        REASONING_TEMPLATE +
         "Write a clean, factual summary of the research in EXACTLY this format:\n"
         "1. Headline\n2. Bullet insights\n3. Final paragraph\n"
         "Check CrewAI memory for previous summaries to avoid duplication. "

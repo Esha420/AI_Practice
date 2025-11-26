@@ -26,6 +26,11 @@ class MemoryLogger(BaseEventListener):
         if hasattr(event.agent, "memory_handler") and event.agent.memory_handler:
             memory = event.agent.memory_handler.load_all()
             print(f"[MEMORY STATE - {event.agent.role}]: {memory}")
+        if event.task.output_file and os.path.exists(event.task.output_file):
+            print("\n[REASONING LOG CONTENT]")
+            with open(event.task.output_file, "r") as f:
+                print(f.read())
+
 
     def on_step_completed(self, event: CrewTestCompletedEvent):
         print(f"[STEP COMPLETED] {event.agent.role} finished a step")
@@ -71,7 +76,9 @@ def evaluate_agent_run(agent, task, inputs):
 
     print(f"\n[AGENT EVALUATION] {agent.role}")
     print(f"Prompt: {context_str}")
-    print(f"Response: {response_text}")
+    print("\n=== RAW AGENT OUTPUT ===")
+    print(response_text)
+    print("=== END OUTPUT ===\n")
     print(f"Time taken: {duration:.2f}s")
 
     evaluator.evaluate(agent.role, context_str, response_text, success=None)
