@@ -11,7 +11,7 @@ write_task = Task(
         "for {topic}. Pull essential content from provided URLs."
         "Use the Summary_Saver tool to save final article headline/insights."
     ),
-    expected_output="JSON reasoning_log + final_answer + markdown article",
+    expected_output="markdown article",
     tools=[scraper, fact_lookup_tool, summary_save_tool],
     agent=news_writer,
     output_file="memory/output_article.md"

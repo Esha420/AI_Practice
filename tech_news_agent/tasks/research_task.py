@@ -10,8 +10,7 @@ research_task = Task(
         "Research the latest developments in {topic}. "
         "Use the URL_Saver tool to save the novel URLs."
     ),
-    expected_output="JSON with reasoning_log + final_answer + artifacts",
+    expected_output="artifacts",
     tools=[search_tool, url_save_tool],
-    agent=news_researcher,
-    output_file="memory/summaries.md"
+    agent=news_researcher
 )

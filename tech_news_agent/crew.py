@@ -9,11 +9,12 @@ from agents.writer import news_writer
 from agents.fact_checker import fact_checker
 from crewai.events import BaseEventListener, TaskCompletedEvent, CrewTestCompletedEvent
 from evaluation.evaluate_agent import AgentEvaluator
+from memory.memory_manager import MemoryManager
 
 # Set storage dir for CrewAI built-in memory
 os.environ["CREWAI_STORAGE_DIR"] = "memory/db"
 
-
+memory_manager = MemoryManager()
 # ---------------- MEMORY LOGGER ----------------
 class MemoryLogger(BaseEventListener):
     def setup_listeners(self, crew):
@@ -55,18 +56,29 @@ evaluator = AgentEvaluator()
 
 
 # ---------------- EVALUATION RUNNER ----------------
-def evaluate_agent_run(agent, task, inputs):
+def evaluate_agent_run(agent, task, inputs, memory_manager: MemoryManager):
     """
     Executes one task with one agent — then logs performance metrics.
+    Integrates Short-Term Memory.
     """
+    # 1. GET STM CONTEXT
+    stm_context = memory_manager.short_term.get_context()
+
     # Convert inputs dict → string for CrewAI context
     context_str = "\n".join([f"{k}: {v}" for k, v in inputs.items()])
+    
+    # 2. ADD STM TO AGENT CONTEXT
+    # This adds the recent history (STM) to the context for the *next* agent to consider.
+    full_context = f"{context_str}\n\n--- RECENT HISTORY (STM) ---\n{stm_context}"
+
 
     start = time.time()
-    response = task.execute_sync(agent, context=context_str)
+    # Execute with the full context
+    response = task.execute_sync(agent, context=full_context)
     duration = time.time() - start
 
     # Convert TaskOutput → safe string
+    # ... (same logic as before)
     if hasattr(response, "output") and response.output:
         response_text = response.output
     elif hasattr(response, "raw"):
@@ -74,6 +86,10 @@ def evaluate_agent_run(agent, task, inputs):
     else:
         response_text = str(response)
 
+    # 3. UPDATE STM BUFFER with the latest task completion (agent role + final output)
+    stm_update = f"[{agent.role} COMPLETED]:\n{response_text[:300]}...\n" # Truncate for efficiency
+    memory_manager.short_term.add(stm_update)
+    
     print(f"\n[AGENT EVALUATION] {agent.role}")
     print(f"Prompt: {context_str}")
     print("\n=== RAW AGENT OUTPUT ===")
@@ -92,6 +108,7 @@ if __name__ == "__main__":
 
     for agent, task in zip(crew.agents, crew.tasks):
         print(f"\n[STARTING TASK] {task.description}")
-        evaluate_agent_run(agent, task, topic_input)
+        # 🎯 PASS THE MEMORY MANAGER HERE
+        evaluate_agent_run(agent, task, topic_input, memory_manager) 
 
     print("\n[Crew Execution Completed]")
