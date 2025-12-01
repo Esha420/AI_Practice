@@ -1,11 +1,12 @@
 #tools/memory_tool.py
 from crewai.tools import BaseTool
 from memory.json_memory import JSONMemory # Import your custom memory
+from memory.fact_memory_db import FactMemoryDB
 
 # Instantiate your persistent memories for the tools to use
 url_memory = JSONMemory("memory/urls.json")
-fact_memory = JSONMemory("memory/facts.json")
 summary_memory = JSONMemory("memory/summaries.json")
+fact_db = FactMemoryDB(db_path="memory/facts.db", max_facts=200)
 
 
 class URLSaveTool(BaseTool):
@@ -19,13 +20,13 @@ class URLSaveTool(BaseTool):
 
 class FactSaveTool(BaseTool):
     name: str = "Fact_Saver"
-    description: str = "A tool to permanently save a verified fact (as key) and its evidence/source (as value) to the Fact memory file."
+    description: str = "Save a verified fact and its evidence into the SQLite memory database."
 
-    def _run(self, fact: str, evidence: str) -> str:
-        """Save a key-value pair to the Facts JSON memory."""
-        fact_memory.set(fact, evidence)
-        return f"Successfully saved fact: {fact} to memory."
-
+    def _run(self, fact: str, evidence: str = "") -> str:
+        fact_db.save_fact(fact, evidence)
+        return f"Fact saved to DB: {fact}"
+    
+    
 class SummarySaveTool(BaseTool):
     name: str = "Summary_Saver"
     description: str = "A tool to permanently save an article summary (as key) and its key insights (as value) to the Summary memory file."
