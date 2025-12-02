@@ -8,3 +8,4 @@ uvicorn
 streamlit
 google-generativeai
 langchain-google-genai
+slack_sdk

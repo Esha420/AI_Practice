@@ -14,18 +14,16 @@ import asyncio
 from data_loader import load_and_chunk_pdf, embed_texts
 from vector_db import QdrantStorage
 from custom_types import RAQQueryResult, RAGSearchResult, RAGUpsertResult, RAGChunkAndSrc
+from safety import is_safe_input, sanitize_output
+from slack import send_slack_message
 
-# Google GenAI SDK for LLM
 import google.generativeai as genai
 
 load_dotenv()
 
-# Configure GenAI
+# Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# instantiate a model object (sync)
-# choose an appropriate Gemini model (gemini-1.5-flash / gemini-2.1 / etc.)
-# If you want a different model, change the string below.
 _gemini_model = genai.GenerativeModel("models/gemini-2.0-flash")
 
 inngest_client = inngest.Inngest(
@@ -35,18 +33,12 @@ inngest_client = inngest.Inngest(
     serializer=inngest.PydanticSerializer()
 )
 
-
+# ----------------------- INGEST PDF -----------------------
 @inngest_client.create_function(
     fn_id="RAG: Ingest PDF",
     trigger=inngest.TriggerEvent(event="rag/ingest_pdf"),
-    throttle=inngest.Throttle(
-        limit=2, period=datetime.timedelta(minutes=1)
-    ),
-    rate_limit=inngest.RateLimit(
-        limit=1,
-        period=datetime.timedelta(hours=4),
-        key="event.data.source_id",
-    ),
+    throttle=inngest.Throttle(limit=2, period=datetime.timedelta(minutes=1)),
+    rate_limit=inngest.RateLimit(limit=1, period=datetime.timedelta(hours=4), key="event.data.source_id"),
 )
 async def rag_ingest_pdf(ctx: inngest.Context):
     def _load(ctx: inngest.Context) -> RAGChunkAndSrc:
@@ -59,21 +51,26 @@ async def rag_ingest_pdf(ctx: inngest.Context):
         chunks = chunks_and_src.chunks
         source_id = chunks_and_src.source_id
         vecs = embed_texts(chunks)
+
         ids = [str(uuid.uuid5(uuid.NAMESPACE_URL, f"{source_id}:{i}")) for i in range(len(chunks))]
         payloads = [{"source": source_id, "text": chunks[i]} for i in range(len(chunks))]
+
         QdrantStorage().upsert(ids, vecs, payloads)
         return RAGUpsertResult(ingested=len(chunks))
 
     chunks_and_src = await ctx.step.run("load-and-chunk", lambda: _load(ctx), output_type=RAGChunkAndSrc)
     ingested = await ctx.step.run("embed-and-upsert", lambda: _upsert(chunks_and_src), output_type=RAGUpsertResult)
+    
     return ingested.model_dump()
 
-
+# ----------------------- QUERY PDF -----------------------
 @inngest_client.create_function(
     fn_id="RAG: Query PDF",
     trigger=inngest.TriggerEvent(event="rag/query_pdf_ai")
 )
 async def rag_query_pdf_ai(ctx: inngest.Context):
+
+    # SEARCH FUNCTION
     def _search(question: str, top_k: int = 5) -> RAGSearchResult:
         query_vec = embed_texts([question])[0]
         store = QdrantStorage()
@@ -81,11 +78,19 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
         return RAGSearchResult(contexts=found["contexts"], sources=found["sources"])
 
     question = ctx.event.data["question"]
+    
+    # SAFETY CHECK BEFORE RAG
+    if not is_safe_input(question):
+        return {"answer": "[Rejected] Unsafe or malicious prompt.", "sources": [], "num_contexts": 0}
+
     top_k = int(ctx.event.data.get("top_k", 5))
 
+    # Retrieve contexts
     found = await ctx.step.run("embed-and-search", lambda: _search(question, top_k), output_type=RAGSearchResult)
 
+    # Build LLM prompt
     context_block = "\n\n".join(f"- {c}" for c in found.contexts)
+
     user_content = (
         "Use the following context to answer the question.\n\n"
         f"Context:\n{context_block}\n\n"
@@ -93,30 +98,35 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
         "Answer concisely using the context above."
     )
 
-    # Helper - synchronous model call wrapped in asyncio.to_thread so we don't block the event loop
+    # Synchronous Gemini call wrapped in thread
     def _answer_llm(prompt: str) -> str:
-        """
-        Call Gemini generative model synchronously and return the generated text.
-        If your genai SDK provides a different API (e.g. client.models.generate_content),
-        adapt this function accordingly.
-        """
-        # Some SDKs accept a list or a single string. This uses the GenerativeModel object style.
-        resp = _gemini_model.generate_content(prompt, generation_config={"temperature": 0.2, "max_output_tokens": 1024})
-        # resp.text is common name for string output in SDK examples
-        # If resp has different attribute names, adjust accordingly.
+        resp = _gemini_model.generate_content(
+            prompt,
+            generation_config={"temperature": 0, "max_output_tokens": 1024}
+        )
         if hasattr(resp, "text"):
             return resp.text.strip()
-        if isinstance(resp, dict):
-            # try to find text in choices or output fields
-            return resp.get("output", "") or resp.get("text", "") or str(resp)
-        # Fallback
         return str(resp)
 
-    # call LLM without blocking
-    answer = await asyncio.to_thread(_answer_llm, user_content)
+    # Run model
+    raw_answer = await asyncio.to_thread(_answer_llm, user_content)
 
-    return {"answer": answer, "sources": found.sources, "num_contexts": len(found.contexts)}
+    # Sanitize output
+    safe_answer = sanitize_output(raw_answer)
 
+    # Send Slack Notification
+    send_slack_message(
+        f"📘 *New RAG Query*\n"
+        f"*Question:* {question}\n"
+        f"*Answer:* {safe_answer[:200]}..."
+    )
 
+    return {
+        "answer": safe_answer,
+        "sources": found.sources,
+        "num_contexts": len(found.contexts)
+    }
+
+# ----------------------- FASTAPI SERVER -----------------------
 app = FastAPI()
 inngest.fast_api.serve(app, inngest_client, [rag_ingest_pdf, rag_query_pdf_ai])
