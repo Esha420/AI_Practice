@@ -81,7 +81,14 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
     
     # SAFETY CHECK BEFORE RAG
     if not is_safe_input(question):
+        # Send alert to dedicated Slack alerts channel
+        send_slack_message(
+            f"🚨 *Unsafe RAG Query Detected*\n"
+            f"*User attempted input:* {question}",
+            channel="#alerts"  # make sure you create this channel in Slack
+        )
         return {"answer": "[Rejected] Unsafe or malicious prompt.", "sources": [], "num_contexts": 0}
+
 
     top_k = int(ctx.event.data.get("top_k", 5))
 
