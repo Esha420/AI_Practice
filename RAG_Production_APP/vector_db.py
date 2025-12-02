@@ -20,9 +20,9 @@ class QdrantStorage:
         self.client.upsert(self.collection, points=points)
 
     def search(self, query_vector, top_k: int = 5):
-        results = self.client.query_points(
+        response = self.client.query_points(
             collection_name=self.collection,
-            query=query_vector,
+            query=query_vector,   # must be 'query'
             with_payload=True,
             limit=top_k
         )
@@ -30,14 +30,12 @@ class QdrantStorage:
         contexts = []
         sources = set()
 
-        for r in results:
+        for r in response.points:  # access 'points' attribute
             payload = getattr(r, "payload", None) or {}
-            # qdrant payload might be dict
             if isinstance(payload, dict):
                 text = payload.get("text", "")
                 source = payload.get("source", "")
             else:
-                # attempt attribute access
                 text = getattr(payload, "text", "")
                 source = getattr(payload, "source", "")
 
