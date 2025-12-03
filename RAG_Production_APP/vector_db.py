@@ -2,6 +2,7 @@
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
+from logger import log_event
 
 
 class QdrantStorage:
@@ -18,6 +19,7 @@ class QdrantStorage:
         points = [PointStruct(id=ids[i], vector=vectors[i], payload=payloads[i]) for i in range(len(ids))]
         # qdrant client expects upsert with collection name and points
         self.client.upsert(self.collection, points=points)
+        log_event("qdrant_upsert", {"count": len(points), "collection": self.collection})
 
     def search(self, query_vector, top_k: int = 5):
         response = self.client.query_points(
@@ -43,4 +45,5 @@ class QdrantStorage:
                 contexts.append(text)
                 sources.add(source)
 
+        log_event("qdrant_search", {"top_k": top_k, "results": len(contexts), "collection": self.collection})
         return {"contexts": contexts, "sources": list(sources)}
