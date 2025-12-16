@@ -73,17 +73,27 @@ def _inngest_api_base() -> str:
     base = os.getenv("INNGEST_DEV_HOST", "http://127.0.0.1:8288")
     return f"{base}/v1"
 
+
+
 def fetch_runs(event_id: str) -> list[dict]:
     url = f"{_inngest_api_base()}/events/{event_id}/runs"
-    resp = requests.get(url)
-    resp.raise_for_status()
-    return resp.json().get("data", [])
-
+    try:
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+        try:
+            data = resp.json()
+            return data.get("data", [])
+        except requests.exceptions.JSONDecodeError:
+            print(f"⚠️ Invalid JSON from Inngest: {resp.text[:200]}")  # print first 200 chars
+            return []
+    except requests.RequestException as e:
+        print(f"⚠️ Error fetching runs: {e}")
+        return []
 
 def wait_for_run_output(event_id: str, timeout_s: float = 120, poll_interval_s: float = 0.5) -> dict:
     start = time.time()
     last_status = None
-    
+
     while True:
         runs = fetch_runs(event_id)
         if runs:
@@ -92,14 +102,20 @@ def wait_for_run_output(event_id: str, timeout_s: float = 120, poll_interval_s: 
             last_status = status or last_status
 
             if status in ("Completed", "Succeeded", "Success", "Finished"):
-                return run.get("output", {})
+                output = run.get("output")
+                if output:
+                    return output
+                else:
+                    print("⚠️ No output yet, retrying...")
+            
             if status in ("Failed", "Cancelled"):
-                raise RuntimeError(f"Function run {status}")
-        
+                raise RuntimeError(f"Inngest run failed: {status}")
+
         if time.time() - start > timeout_s:
-            raise TimeoutError(f"Timed out (last status: {last_status})")
+            raise TimeoutError(f"Timed out waiting for run output (last status: {last_status})")
 
         time.sleep(poll_interval_s)
+
 
 
 # ============================================================
